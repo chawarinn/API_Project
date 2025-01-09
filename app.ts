@@ -3,6 +3,7 @@ import cors from "cors";
 import { router as login } from "./api/login";
 import { router as register } from "./api/register";
 import { router as search } from "./api/search";
+import { router as hotel } from "./api/hotel";
 
 import bodyParser from "body-parser";
 
@@ -27,3 +28,4 @@ app.use(
   app.use("", login);
   app.use("", register);
   app.use("", search);
+  app.use("", hotel);
