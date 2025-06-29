@@ -4,7 +4,7 @@ export interface Hotel {
     detail: string;
     lat: number; 
     long : number;
-    phone: number;
+    phone: string;
     contact: string;
     startingPrice: number;
     location: string;

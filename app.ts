@@ -4,6 +4,9 @@ import { router as login } from "./api/login";
 import { router as register } from "./api/register";
 import { router as search } from "./api/search";
 import { router as hotel } from "./api/hotel";
+import { router as artist } from "./api/artist";
+import { router as restaurant } from "./api/restaurant"
+import { router as event } from "./api/event"
 
 import bodyParser from "body-parser";
 
@@ -20,8 +23,6 @@ app.use(bodyParser.json());
 app.use(
     cors({
       origin: "*",
-      // origin: "http://localhost:4200"
-      // origin: 'http://172.20.10.4',
     })  
   );
   
@@ -29,3 +30,6 @@ app.use(
   app.use("", register);
   app.use("", search);
   app.use("", hotel);
+  app.use("", artist);
+  app.use("", restaurant);
+  app.use("", event);

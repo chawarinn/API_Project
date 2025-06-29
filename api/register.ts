@@ -48,6 +48,10 @@ router.post(
         `SELECT phone FROM User WHERE phone = ?`,
         [users.phone]
       );
+      const checkEmailSql = mysql.format(
+        `SELECT email FROM User WHERE email = ?`,
+        [users.email]
+      );
 
       conn.query(checkPhoneSql, async (err, results) => {
         if (err) {
@@ -60,6 +64,18 @@ router.post(
           res.status(409).json({ error: "Phone number already registered." });
           return; 
         }
+      conn.query(checkEmailSql, async (err, emailResults) => {
+  if (err) {
+    console.error("Error checking email:", err);
+    res.status(500).json({ error: "Internal server error." });
+    return;
+  }
+
+  if (emailResults.length > 0) {
+    res.status(409).json({ error: "Email already registered." });
+    return;
+  }
+
 
         // เชื่อม userType
         const userTypeMap: Record<string, number> = {
@@ -74,6 +90,10 @@ router.post(
           res.status(400).json({ error: `Invalid userType: ${users.userType}` });
           return; 
         }
+        const validGenders = ['Male', 'Female', 'Prefer not to say'];
+      if (!validGenders.includes(users.gender)) {
+        return res.status(400).json({ error: "Invalid gender value." });
+      }
 
         let imageUrl = null;
 
@@ -101,10 +121,11 @@ router.post(
           const hashedPassword = await bcrypt.hash(users.password, 10);
 
           const insertUserSql = mysql.format(
-            `INSERT INTO User (name, phone, email, password, photo, typeID) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO User (name, gender, phone, email, password, photo, typeID) 
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
             [
               users.name,
+              users.gender,
               users.phone,
               users.email,
               hashedPassword,
@@ -133,6 +154,7 @@ router.post(
           res.status(500).json({ error: "Error registering user." });
           return; 
         }
+      });
       });
     } catch (error) {
       console.error("Unexpected error:", error);

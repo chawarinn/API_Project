@@ -64,7 +64,9 @@ router.get('/search/hotel', (req, res) => {
     let hotelQuery = '';
 
      if (!searchQuery) {
-        const hotelQuery = 'SELECT * FROM Hotel';
+        const hotelQuery = 'SELECT H.*, IFNULL(SUM(P.piont), 0) AS totalPiont'
+            'FROM Hotel H'
+            'LEFT JOIN Piont P ON H.hotelID = P.hotelID';
         const hotelResults =  new Promise<any[]>((resolve, reject) => {
             conn.query(hotelQuery, (error, results) => {
                 if (error) {
@@ -97,24 +99,28 @@ router.get('/search/hotel', (req, res) => {
             }
 
             hotelQuery = `
-                SELECT 
-                H.*,
-                E.lat AS eventLat,
-                E.long AS eventLong,
-                (6371 * 
-                    ACOS(
-                        COS(RADIANS(E.lat)) * COS(RADIANS(H.lat)) * 
-                        COS(RADIANS(H.long) - RADIANS(E.long)) + 
-                        SIN(RADIANS(E.lat)) * SIN(RADIANS(H.lat))
-                    )
-                ) AS distance
-            FROM Hotel H
-            CROSS JOIN Event E
-            WHERE 
-                H.hotelName LIKE ? 
-                OR E.location LIKE ? 
-            HAVING distance <= ?
-            ORDER BY distance ASC;
+               SELECT 
+    H.*,
+    IFNULL(SUM(P.piont), 0) AS totalPiont,
+    E.lat AS eventLat,
+    E.long AS eventLong,
+    (6371 * 
+        ACOS(
+            COS(RADIANS(E.lat)) * COS(RADIANS(H.lat)) * 
+            COS(RADIANS(H.long) - RADIANS(E.long)) + 
+            SIN(RADIANS(E.lat)) * SIN(RADIANS(H.lat))
+        )
+    ) AS distance
+FROM Hotel H
+LEFT JOIN Piont P ON H.hotelID = P.hotelID
+CROSS JOIN Event E
+WHERE 
+    H.hotelName LIKE ? 
+    OR E.location LIKE ?
+GROUP BY H.hotelID, H.hotelName, H.lat, H.long, H.address, H.tel, H.email, E.lat, E.long
+HAVING distance <= ?
+ORDER BY distance ASC;
+
             `;
             conn.query(hotelQuery, [`%${searchQuery}%`, `%${searchQuery}%`, maxDistance], (error, results: (Hotel & { eventLat: number, eventLong: number, distance: number })[]) => {
                 if (error) {

@@ -18,6 +18,7 @@
     "typescript": "^5.6.2"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/multer": "^1.4.12",
@@ -29,6 +30,7 @@
     "firebase-admin": "^12.6.0",
     "multer": "^1.4.5-lts.1",
     "mysql": "^2.18.1",
+    "mysql2": "^3.14.1",
     "nodemon": "^3.1.9"
   },
   "description": ""
