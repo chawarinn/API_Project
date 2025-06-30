@@ -283,3 +283,63 @@ router.get('/hoteldetail', async (req, res) => {
   });
 });
 
+router.get('/checkpoint', (req, res) => {
+  const userID = req.query.userID;
+  const hotelID = req.query.hotelID;
+  const sql = 'SELECT * FROM Piont WHERE userID = ? AND hotelID = ?';
+
+  conn.query(sql, [userID, hotelID], (err, result) => {
+    if (err) return res.status(500).send('Error');
+    if (result.length > 0) {
+      res.json({ hasRated: true });
+    } else {
+      res.json({ hasRated: false });
+    }
+  });
+});
+
+  router.post(
+    "/addpoint",
+    async (req, res): Promise<void> => {  
+      const point = req.body;
+      try {
+        let sql = `
+          INSERT INTO \`Piont\`(\`userID\`, \`hotelID\`,\`piont\`) 
+          VALUES (?, ?, ?)
+        `;
+  
+        sql = mysql.format(sql, [
+            point.userID,
+            point.hotelID,
+            1
+        ]);
+  
+        conn.query(sql, (err, result) => {
+          if (err) {
+            console.error("Error inserting artist:", err);
+            res.status(501).json({ error: "Error adding point." });
+            return; 
+          }
+  
+          res.status(201).json({
+            message: "added successfully.",
+            pointID: point.pointID,
+          });
+        });
+      } catch (hashError) {
+        console.error("Error in SQL query:", hashError);
+        res.status(500).json({ error: "Error adding point." });
+      }
+    }
+  );
+router.delete("/deletepoint", (req, res) => {
+  const { userID, hotelID } = req.query;
+
+  const sql = `
+    DELETE FROM Piont WHERE userID = ? AND hotelID = ?
+  `;
+  conn.query(sql, [userID, hotelID], (err, results) => {
+    if (err) return res.status(500).json({ error: "Delete error" });
+    res.json({ message: "Removed from point" });
+  });
+});

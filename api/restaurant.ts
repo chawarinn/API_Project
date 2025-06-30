@@ -55,3 +55,4 @@ interface RestaurantWithDistance extends Restaurant {
   eventLat?: number;
   eventLong?: number;
 }
+
