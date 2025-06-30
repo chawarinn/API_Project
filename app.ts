@@ -7,6 +7,7 @@ import { router as hotel } from "./api/hotel";
 import { router as artist } from "./api/artist";
 import { router as restaurant } from "./api/restaurant"
 import { router as event } from "./api/event"
+import { router as roomshare } from "./api/roomshare";
 
 import bodyParser from "body-parser";
 
@@ -33,3 +34,4 @@ app.use(
   app.use("", artist);
   app.use("", restaurant);
   app.use("", event);
+  app.use("", roomshare);
