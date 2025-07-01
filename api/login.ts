@@ -56,3 +56,58 @@ router.get("/user", (req, res) => {
     }
   });
 });
+
+router.delete("/deleteAccount", (req, res) => {
+  const userID = req.query.userID;
+ 
+  const deleteFavArtist = "DELETE FROM Fav_Artist WHERE userID = ?";
+  const deleteRoomShare = "DELETE FROM RoomShare WHERE userID = ?";
+  const deleteHotel = "DELETE FROM Hotel WHERE userID = ?";
+  const deleteEvent = "DELETE FROM Event WHERE userID = ?";
+  const deleteRestaurant = "DELETE FROM Restaurant WHERE userID = ?";
+  const deletePoint = "DELETE FROM Piont WHERE userID = ?";
+  const deleteUser = "DELETE FROM User WHERE userID = ?";
+  
+
+  // ลบ Fav_Artist
+  conn.query(deleteFavArtist, [userID], (err) => {
+    if (err) return res.status(500).json({ message: "ลบ Fav_Artist ไม่สำเร็จ", error: err });
+
+    // ลบ RoomShare
+    conn.query(deleteRoomShare, [userID], (err) => {
+      if (err) return res.status(500).json({ message: "ลบ RoomShare ไม่สำเร็จ", error: err });
+
+      // ลบ Hotel
+      conn.query(deleteHotel, [userID], (err) => {
+        if (err) return res.status(500).json({ message: "ลบ Hotel ไม่สำเร็จ", error: err });
+
+        // ลบ Event
+        conn.query(deleteEvent, [userID], (err) => {
+          if (err) return res.status(500).json({ message: "ลบ Event ไม่สำเร็จ", error: err });
+
+          // ลบ Restaurant
+          conn.query(deleteRestaurant, [userID], (err) => {
+            if (err) return res.status(500).json({ message: "ลบ Restaurant ไม่สำเร็จ", error: err });
+   // ลบ Point
+             conn.query(deletePoint, [userID], (err) => {
+            if (err) return res.status(500).json({ message: "ลบ Point ไม่สำเร็จ", error: err });
+
+            // สุดท้ายลบ User
+            conn.query(deleteUser, [userID], (err, result) => {
+              if (err) {
+                return res.status(500).json({ message: "ลบ User ไม่สำเร็จ", error: err });
+              }
+
+              if (result.affectedRows === 0) {
+                return res.status(404).json({ message: "ไม่พบผู้ใช้หรือถูกลบไปแล้ว" });
+              }
+
+              return res.status(200).json({ message: "ลบบัญชีผู้ใช้เรียบร้อยแล้ว" });
+            });
+          });
+        });
+      });
+    });
+    });
+  });
+});
