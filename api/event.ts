@@ -115,6 +115,22 @@ ORDER BY date ASC
     }
 });
 
+router.get('/event', async (req, res) => {
+    try {
+        const sql = `SELECT * FROM Event
+`;
+        conn.query(sql, (error, results) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ error: 'Query error' });
+            }
+            res.json(results); 
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'An error occurred while fetching events' });
+    }
+});
 // ค้นหา
 router.get('/search/event', (req, res) => {
   const searchQuery = req.query.query?.toString() || '';

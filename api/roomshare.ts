@@ -1,5 +1,7 @@
 import express from "express";
 import { conn } from "../dbconnect";
+import mysql from "mysql";
+import multer from "multer";
 
 export const router = express.Router();
 
@@ -10,6 +12,7 @@ router.get('/roomshare', (req, res) => {
       RoomShare.contact AS shareContact,
       User.*, 
       User.phone AS userPhone,
+      User.userID AS userId,
       Event.*, 
       Event.location AS eventLocation,
       Artist.*,
@@ -40,6 +43,7 @@ router.get('/roomshareevent', (req, res) => {
       RoomShare.contact AS shareContact,
       User.*, 
       User.phone AS userPhone,
+      User.userID AS userId,
       Event.*, 
       Event.location AS eventLocation,
       Artist.*,
@@ -121,3 +125,93 @@ router.get("/userreq", (req, res) => {
   });
 });
 
+const upload = multer(); // for parsing multipart/form-data without files
+
+router.post(
+  "/addroomshare",
+  upload.none(),
+  async (req, res): Promise<void> => {
+    const roomshare = req.body;
+
+    console.log("Received roomshare:", roomshare);
+
+    // เช็คค่าที่จำเป็น
+    const requiredFields = [
+      "contact",
+      "note",
+      "gender_restrictions",
+      "price",
+      "typeRoom",
+      "status",
+      "userID",
+      "eventID",
+      "artistID",
+      "hotelID",
+    ];
+
+    for (const field of requiredFields) {
+      if (
+        roomshare[field] === undefined ||
+        roomshare[field] === null ||
+        (typeof roomshare[field] === "string" && roomshare[field].trim() === "")
+      ) {
+        res.status(400).json({ error: `Field '${field}' is required.` });
+        return;
+      }
+    }
+
+    try {
+      let sql = `
+        INSERT INTO RoomShare (
+          contact, note, gender_restrictions, price, typeRoom, status,
+          userID, eventID, artistID, hotelID
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `;
+
+      const params = [
+        roomshare.contact,
+        roomshare.note,
+        roomshare.gender_restrictions,
+        roomshare.price,
+        roomshare.typeRoom,
+        roomshare.status,
+        roomshare.userID,
+        roomshare.eventID,
+        roomshare.artistID,
+        roomshare.hotelID,
+      ];
+
+      sql = mysql.format(sql, params);
+
+      conn.query(sql, (err, result) => {
+        if (err) {
+          console.error("Error inserting:", err);
+          res.status(500).json({ error: "Error adding roomshare." });
+          return;
+        }
+        const roomID = result.insertId;
+
+        res.status(201).json({
+          message: "Added successfully.",
+          roomshareID: roomID,
+        });
+      });
+    } catch (error) {
+      console.error("Error in SQL query:", error);
+      res.status(500).json({ error: "Error adding roomshare." });
+    }
+  }
+);
+
+router.delete('/deleteroomshare/:id', async (req, res) => {
+  const roomshareID = req.params.id;
+
+  try {
+    let sql = `DELETE FROM RoomShare WHERE roomshareID = ?`;
+    await conn.query(sql, [roomshareID]);
+    res.status(200).json({ message: "Deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});

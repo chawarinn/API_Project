@@ -343,3 +343,42 @@ router.delete("/deletepoint", (req, res) => {
     res.json({ message: "Removed from point" });
   });
 });
+
+router.get('/hotel', async (req, res) => {
+    try {
+        const sql = `SELECT * FROM Hotel
+`;
+        conn.query(sql, (error, results) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ error: 'Query error' });
+            }
+            res.json(results); 
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'An error occurred while fetching events' });
+    }
+});
+
+
+router.get('/typeroom', async (req, res) => {
+  const hotelID = req.query.hotelID;
+    try {
+        const sql = `
+            SELECT R.* 
+            FROM Type_Room R 
+            WHERE R.hotelID = ?
+        `;
+        conn.query(sql, [hotelID], (error, results) => {
+            if (error) {
+                console.error(error);
+                return res.status(500).json({ error: 'Query error' });
+            }
+            res.json(results);
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'An error occurred while fetching room types' });
+    }
+});

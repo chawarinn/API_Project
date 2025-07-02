@@ -8,6 +8,7 @@ import { router as artist } from "./api/artist";
 import { router as restaurant } from "./api/restaurant"
 import { router as event } from "./api/event"
 import { router as roomshare } from "./api/roomshare";
+import { router as user } from "./api/user";
 
 import bodyParser from "body-parser";
 
@@ -35,3 +36,4 @@ app.use(
   app.use("", restaurant);
   app.use("", event);
   app.use("", roomshare);
+  app.use("", user);
