@@ -59,8 +59,8 @@ router.post(
   
       try {
         let sql = `
-          INSERT INTO \`Hotel\`(\`hotelName\`, \`hotelName2\`, \`hotelPhoto\`, \`detail\`, \`lat\`, \`long\`, \`phone\`, \`contact\`, \`startingPrice\`, \`location\`) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO \`Hotel\`(\`hotelName\`, \`hotelName2\`, \`hotelPhoto\`, \`detail\`, \`lat\`, \`long\`, \`phone\`, \`contact\`, \`startingPrice\`, \`location\`, \`userID\`) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
   
         sql = mysql.format(sql, [
@@ -74,6 +74,7 @@ router.post(
           hotel.contact,
           hotel.startingPrice,
           hotel.location,
+          hotel.userID,
         ]);
   
         conn.query(sql, (err, result) => {
@@ -381,4 +382,84 @@ router.get('/typeroom', async (req, res) => {
         console.error(error);
         res.status(500).json({ error: 'An error occurred while fetching room types' });
     }
+});
+
+router.get('/hotelhome', async (req, res) => {
+    const userID = req.query.userID;
+
+    try {
+        const hotelQuery = `
+            SELECT H.*, IFNULL(SUM(P.piont), 0) AS totalPiont
+            FROM Hotel H
+            LEFT JOIN Piont P ON H.hotelID = P.hotelID
+            WHERE H.userID = ?
+            GROUP BY H.hotelID
+            ORDER BY totalPiont DESC
+        `;
+
+        const hotelResults = await new Promise((resolve, reject) => {
+            conn.query(hotelQuery, [userID], (error, results) => {
+                if (error) reject(error);
+                else resolve(results);
+            });
+        });
+
+        res.json(hotelResults);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            error: 'An error occurred while fetching hotels with points'
+        });
+    }
+});
+
+
+router.delete("/deletehotel", (req, res) => {
+  const hotelID = req.query.hotelID;
+
+  const deleteRoomShare = "DELETE FROM RoomShare WHERE hotelID = ?";
+  const deletePoint = "DELETE FROM Piont WHERE hotelID = ?";
+  const deleteTypeRoom = "DELETE FROM Type_Room WHERE hotelID = ?";
+  const deleteHotel = "DELETE FROM Hotel WHERE hotelID = ?";
+
+   
+  conn.query(deleteRoomShare, [hotelID], (err, roomResult) => {
+    if (err) return res.status(500).json({ message: "ลบ RoomShare ไม่สำเร็จ", error: err });
+
+    if (roomResult.affectedRows > 0) {
+      console.log("ลบ RoomShare แล้ว");
+    } else {
+      console.log("ไม่มี RoomShare ที่ต้องลบ");
+    }
+
+    conn.query(deletePoint, [hotelID], (err, pointResult) => {
+      if (err) return res.status(500).json({ message: "ลบ Point ไม่สำเร็จ", error: err });
+
+      if (pointResult.affectedRows > 0) {
+        console.log("ลบ Point แล้ว");
+      } else {
+        console.log("ไม่มี Point ที่ต้องลบ");
+      }
+
+      conn.query(deleteTypeRoom, [hotelID], (err, typeRoomResult) => {
+        if (err) return res.status(500).json({ message: "ลบ Type_Room ไม่สำเร็จ", error: err });
+
+        if (typeRoomResult.affectedRows > 0) {
+          console.log("ลบ Type_Room แล้ว");
+        } else {
+          console.log("ไม่มี Type_Room ที่ต้องลบ");
+        }
+
+        conn.query(deleteHotel, [hotelID], (err, hotelResult) => {
+          if (err) return res.status(500).json({ message: "ลบ Hotel ไม่สำเร็จ", error: err });
+
+          if (hotelResult.affectedRows === 0) {
+            return res.status(404).json({ message: "ไม่พบโรงแรมหรือถูกลบไปแล้ว" });
+          }
+
+          return res.status(200).json({ message: "ลบโรงแรมเรียบร้อยแล้ว" });
+        });
+      });
+    });
+  });
 });
