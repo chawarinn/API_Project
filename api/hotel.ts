@@ -463,3 +463,279 @@ router.delete("/deletehotel", (req, res) => {
     });
   });
 });
+
+router.get("/hotels", (req, res) => {
+  const hotelID = req.query.hotelID;
+  const sql = "SELECT * FROM Hotel WHERE hotelID = ?";
+  conn.query(sql, [hotelID], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "An error occurred", error: err });
+    }
+    if (results.length > 0) {
+      return res.json(results[0]); 
+    } else {
+      return res.status(404).json({ message: "Hotel not found" }); 
+    }
+  });
+});
+
+router.put(
+  "/edithotel",
+  fileUpload.diskLoader.single("file"),
+  async (req, res) => {
+    try {
+      const hotels = req.body;
+      let imageUrl = null;
+
+      if (req.file) {
+        try {
+          const filename =
+            Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
+          const storageRef = ref(storage, `/images/${filename}`);
+          const metadata = { contentType: req.file.mimetype };
+
+          const snapshot = await uploadBytesResumable(
+            storageRef,
+            req.file.buffer,
+            metadata
+          );
+          imageUrl = await getDownloadURL(snapshot.ref);
+        } catch (error) {
+          console.error("Error uploading to Firebase:", error);
+          res.status(509).json({ error: "Error uploading image." });
+          return;
+        }
+      }
+
+      let sql = "";
+      let params = [];
+
+      if (imageUrl) {
+        sql = `UPDATE Hotel SET 
+        hotelName = ?, 
+        hotelName2 = ?, 
+        phone = ?, 
+        detail = ?, 
+        lat = ?,
+        \`long\` = ?, 
+        contact = ?,
+        startingPrice = ?,
+        location = ?,
+        hotelPhoto = ? 
+        WHERE hotelID = ?`;
+        params = [
+          hotels.hotelName,
+          hotels.hotelName2,
+          hotels.phone,
+          hotels.detail,
+          hotels.lat,
+          hotels.long,
+          hotels.contact,
+          hotels.startingPrice,
+          hotels.location,
+          imageUrl,
+          hotels.hotelID,
+        ];
+      } else {
+        sql = ` UPDATE Hotel SET 
+        hotelName = ?, 
+        hotelName2 = ?, 
+        phone = ?, 
+        detail = ?, 
+        lat = ?,
+        \`long\` = ?, 
+        contact = ?,
+        startingPrice = ?,
+        location = ?
+        WHERE hotelID = ?
+        `;
+        params = [
+          hotels.hotelName,
+          hotels.hotelName2,
+          hotels.phone,
+          hotels.detail,
+          hotels.lat,
+          hotels.long,
+          hotels.contact,
+          hotels.startingPrice,
+          hotels.location,
+          hotels.hotelID,
+        ];
+      }
+
+      const updateUserSql = mysql.format(sql, params);
+
+      conn.query(updateUserSql, (err, result) => {
+        if (err) {
+          console.error("Error updating hotel:", err);
+          res.status(500).json({ error: "Error updating hotel." });
+          return;
+        }
+
+        res.status(200).json({
+          imageUrl: imageUrl,
+          hotelId: hotels.hotelId,
+        });
+      });
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      res.status(500).json({ error: "Unexpected server error." });
+    }
+  }
+);
+
+router.get("/rooms", (req, res) => {
+  const hotelID = req.query.hotelID;
+  const sql = "SELECT * FROM Type_Room WHERE hotelID = ?";
+  conn.query(sql, [hotelID], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "An error occurred", error: err });
+    }
+    if (results.length > 0) {
+      return res.json(results); 
+    } else {
+      return res.status(404).json({ message: "Type_Room not found" }); 
+    }
+  });
+});
+
+router.delete("/deleteroom", (req, res) => {
+  const roomID = req.query.roomID;
+
+  const deleteTypeRoom = "DELETE FROM Type_Room WHERE roomID = ?";
+
+  conn.query(deleteTypeRoom, [roomID], (err, typeRoomResult) => {
+    if (err) {
+      return res.status(500).json({ message: "ลบ Type_Room ไม่สำเร็จ", error: err });
+    }
+
+    if (typeRoomResult.affectedRows > 0) {
+      console.log("ลบ Type_Room แล้ว");
+    } else {
+      console.log("ไม่มี Type_Room ที่ต้องลบ");
+    }
+
+    return res.status(200).json({ message: "ลบข้อมูลห้องเรียบร้อยแล้ว" });
+  });
+});
+
+router.get("/Room", (req, res) => {
+  const roomID = req.query.roomID;
+  const sql = "SELECT * FROM Type_Room WHERE roomID = ?";
+  conn.query(sql, [roomID], (err, results) => {
+    if (err) {
+      return res.status(500).json({ message: "An error occurred", error: err });
+    }
+    if (results.length > 0) {
+      return res.json(results[0]); 
+    } else {
+      return res.status(404).json({ message: "Hotel not found" }); 
+    }
+  });
+});
+
+router.delete("/deleteallroom", (req, res) => {
+  const hotelID = req.query.hotelID;
+
+  const deleteTypeRoom = "DELETE FROM Type_Room WHERE hotelID = ?";
+
+  conn.query(deleteTypeRoom, [hotelID], (err, typeRoomResult) => {
+    if (err) {
+      return res.status(500).json({ message: "ลบ Type_Room ไม่สำเร็จ", error: err });
+    }
+
+    if (typeRoomResult.affectedRows > 0) {
+      console.log("ลบ Type_Room แล้ว");
+    } else {
+      console.log("ไม่มี Type_Room ที่ต้องลบ");
+    }
+
+    // ✅ สำคัญมาก: ต้องตอบกลับ client เสมอ
+    return res.status(200).json({ message: "ลบข้อมูลห้องเรียบร้อยแล้ว" });
+  });
+});
+
+
+router.put(
+  "/editroom",
+  fileUpload.diskLoader.single("file"),
+  async (req, res) => {
+    try {
+      const rooms = req.body;
+      let imageUrl = null;
+
+      if (req.file) {
+        try {
+          const filename =
+            Date.now() + "-" + Math.round(Math.random() * 10000) + ".png";
+          const storageRef = ref(storage, `/images/${filename}`);
+          const metadata = { contentType: req.file.mimetype };
+
+          const snapshot = await uploadBytesResumable(
+            storageRef,
+            req.file.buffer,
+            metadata
+          );
+          imageUrl = await getDownloadURL(snapshot.ref);
+        } catch (error) {
+          console.error("Error uploading to Firebase:", error);
+          res.status(509).json({ error: "Error uploading image." });
+          return;
+        }
+      }
+
+      let sql = "";
+      let params = [];
+
+      if (imageUrl) {
+        sql = `UPDATE Type_Room SET 
+        roomName = ?, 
+        price = ?,
+        size = ?,
+        status = ?,
+        photo = ? 
+        WHERE roomID = ?`;
+        params = [
+          rooms.roomName,
+          rooms.price,
+          rooms.size,
+          rooms.status,
+          imageUrl,
+          rooms.roomID,
+        ];
+      } else {
+        sql = ` UPDATE Type_Room SET 
+        roomName = ?, 
+        price = ?,
+        size = ?,
+        status = ?
+        WHERE roomID = ?`
+        params = [
+         rooms.roomName,
+          rooms.price,
+          rooms.size,
+          rooms.status,
+          rooms.roomID,
+        ];
+      }
+
+      const updateUserSql = mysql.format(sql, params);
+
+      conn.query(updateUserSql, (err, result) => {
+        if (err) {
+          console.error("Error updating room:", err);
+          res.status(500).json({ error: "Error updating room." });
+          return;
+        }
+
+        res.status(200).json({
+          imageUrl: imageUrl,
+          roomID: rooms.roomID,
+        });
+      });
+    } catch (error) {
+      console.error("Unexpected error:", error);
+      res.status(500).json({ error: "Unexpected server error." });
+    }
+  }
+);
