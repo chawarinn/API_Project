@@ -189,8 +189,6 @@ ORDER BY date ASC
   }
 });
 
-
-// GET /EventH?userID=xx  -> คืน array ของ events พร้อม artists
 router.get('/EventH', (req, res) => {
   const userID = req.query.userID as string;
 
@@ -583,3 +581,77 @@ if (body.artists) {
     }
   }
 );
+
+router.get('/EventAdmin', (req, res) => {
+  const sql = `
+    SELECT 
+      E.eventID,
+      E.lat,
+      E.long,
+      E.eventName,
+      E.eventPhoto,
+      E.linkticket,
+      E.location,
+      E.date,
+      E.time,
+      E.ltime,
+      E.typeEventID,
+      TE.typeEventName,
+      A.artistID,
+      COALESCE(A.artistName, '') AS artistName,
+      COALESCE(A.artistPhoto, '') AS artistPhoto
+    FROM 
+      Event E
+    LEFT JOIN 
+      Event_Artist EA ON E.eventID = EA.eventID
+    LEFT JOIN 
+      Artist A ON EA.artistID = A.artistID
+    LEFT JOIN 
+      Type_Event TE ON E.typeEventID = TE.typeEventID
+    ORDER BY E.date DESC
+  `;
+
+  conn.query(sql, (err: mysql.MysqlError | null, results: EventArtistRow[]) => {
+    if (err) {
+      console.error("Database error:", err);
+      return res.status(500).json({ message: "An error occurred", error: err });
+    }
+
+    if (results.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    const eventsMap = new Map<number, any>();
+
+    results.forEach((row) => {
+      if (!eventsMap.has(row.eventID)) {
+        eventsMap.set(row.eventID, {
+          eventID: row.eventID,
+          lat: row.lat,
+          long: row.long,
+          eventName: row.eventName,
+          eventPhoto: row.eventPhoto,
+          linkticket: row.linkticket,
+          location: row.location,
+          date: row.date,
+          time: row.time,
+          ltime: row.ltime,
+          typeEventID: row.typeEventID,
+          typeEventName: row.typeEventName,
+          artists: []
+        });
+      }
+
+      if (row.artistID) {
+        eventsMap.get(row.eventID).artists.push({
+          artistID: row.artistID,
+          artistName: row.artistName,
+          artistPhoto: row.artistPhoto
+        });
+      }
+    });
+
+    const eventsArray = Array.from(eventsMap.values());
+    return res.status(200).json(eventsArray);
+  });
+});
