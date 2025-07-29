@@ -40,4 +40,4 @@ app.use(
   app.use("", roomshare);
   app.use("", user);
   app.use("", photo);
-  app.use("", resetPW);
+  app.use("/auth", resetPW);
