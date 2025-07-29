@@ -68,9 +68,12 @@ router.get('/roomshareevent', (req, res) => {
 });
 
 interface FavoriteArtistRow {
-  artistID: number;
-  artistName: string;
-  userID: number;
+  artistID: number | null;
+  artistName: string | null;
+}
+
+interface UserRow extends FavoriteArtistRow {
+  userID: string;
   name: string;
   photo: string;
   email: string;
@@ -84,12 +87,17 @@ router.get("/userreq", (req, res) => {
 
   const sql = `
     SELECT 
-      User.*, 
+      User.userID,
+      User.name,
+      User.photo,
+      User.email,
+      User.gender,
+      User.phone,
       Artist.artistID, 
       Artist.artistName
     FROM User
-    JOIN Fav_Artist ON User.userID = Fav_Artist.userID
-    JOIN Artist ON Fav_Artist.artistID = Artist.artistID
+    LEFT JOIN Fav_Artist ON User.userID = Fav_Artist.userID
+    LEFT JOIN Artist ON Fav_Artist.artistID = Artist.artistID
     WHERE User.userID = ?
   `;
 
@@ -99,33 +107,31 @@ router.get("/userreq", (req, res) => {
     }
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "User not found or no favorite artists" });
+      return res.status(404).json({ message: "User not found" });
     }
 
-   
     const user = {
       userID: results[0].userID,
       name: results[0].name,
-        photo: results[0].photo,
-  email: results[0].email,
-  gender: results[0].gender,
-  phone: results[0].phone
+      photo: results[0].photo,
+      email: results[0].email,
+      gender: results[0].gender,
+      phone: results[0].phone
     };
 
-    const favoriteArtists = (results as FavoriteArtistRow[]).map((row) => ({
-  artistID: row.artistID,
-  artistName: row.artistName,
-}));
+    
+const favoriteArtists = (results as UserRow[])
+  .filter((row) => row.artistID !== null)
+  .map((row) => ({
+    artistID: row.artistID!,
+    artistName: row.artistName!
+  }));
 
-
-    return res.json({
-      user,
-      favoriteArtists,
-    });
+    return res.json({ user, favoriteArtists });
   });
 });
 
-const upload = multer(); // for parsing multipart/form-data without files
+const upload = multer(); 
 
 router.post(
   "/addroomshare",
@@ -215,3 +221,69 @@ router.delete('/deleteroomshare/:id', async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 });
+
+router.post('/updatestatusroomshare', (req, res) => {
+  const { roomshareID, status } = req.body;
+  const sql = 'UPDATE RoomShare SET status = ? WHERE roomshareID = ?';
+
+  conn.query(sql, [status, roomshareID], (error, results) => {
+    if (error) {
+      console.error('MySQL error:', error);
+      return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการอัปเดตฐานข้อมูล' });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ error: 'ไม่พบ roomshareID ที่ระบุ' });
+    }
+
+    res.json({ message: 'อัปเดตสถานะเรียบร้อยแล้ว' });
+  });
+});
+
+
+router.get('/roomshareNoti', (req, res) => {
+  const { roomshareID } = req.query;
+
+  const sql = `
+    SELECT 
+      RoomShare.*, 
+      RoomShare.contact AS shareContact,
+      User.*, 
+      User.phone AS userPhone,
+      User.userID AS userId,
+      Event.*, 
+      Event.location AS eventLocation,
+      Artist.*,
+      Hotel.*,
+      Hotel.location AS hotelLocation,
+      Hotel.contact AS hotelcontact,
+      Hotel.phone AS hotelPhone
+    FROM RoomShare
+    JOIN User ON RoomShare.userID = User.userID
+    LEFT JOIN Event ON RoomShare.eventID = Event.eventID
+    LEFT JOIN Artist ON RoomShare.artistID = Artist.artistID
+    LEFT JOIN Hotel ON RoomShare.hotelID = Hotel.hotelID
+    WHERE RoomShare.roomshareID = ?`;
+
+  conn.query(sql, [roomshareID], (error, results) => {
+    if (error) {
+      console.error("Database error:", error);
+      return res.status(500).json({ error: 'เกิดข้อผิดพลาดในการดึงข้อมูล' });
+    }
+    res.json(results);
+  });
+});
+
+interface FavoriteArtistRow {
+  artistID: number | null;
+  artistName: string | null;
+}
+
+interface UserRow extends FavoriteArtistRow {
+  userID: string;
+  name: string;
+  photo: string;
+  email: string;
+  gender: string;
+  phone: string;
+}
