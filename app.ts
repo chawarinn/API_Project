@@ -10,6 +10,8 @@ import { router as event } from "./api/event"
 import { router as roomshare } from "./api/roomshare";
 import { router as user } from "./api/user";
 import { router as photo } from "./api/photo";
+import { router as resetPW } from "./api/resetPw";
+
 
 import bodyParser from "body-parser";
 
@@ -39,3 +41,4 @@ app.use(
   app.use("", roomshare);
   app.use("", user);
   app.use("", photo);
+  app.use("/auth", resetPW);

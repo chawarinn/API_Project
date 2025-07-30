@@ -4,6 +4,7 @@ import multer from "multer";
 import mysql from "mysql";
 export const router = express.Router();
 import { initializeApp } from "firebase/app";
+import admin from "firebase-admin";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 
@@ -21,6 +22,7 @@ initializeApp(firebaseConfig);
 const storage = getStorage();
 
 
+// ✅ Multer ตั้ง memory storage สำหรับอัปโหลดรูป
 class FileMiddleware {
   filename = "";
 
@@ -30,6 +32,7 @@ class FileMiddleware {
   });
 }
 const fileUpload = new FileMiddleware();
+
 
 router.post(
   "/photo",
@@ -54,10 +57,9 @@ router.post(
         urls.push(imageUrl);
       }
 
-      res.status(200).json({ urls }); 
+      res.status(200).json({ urls }); // ส่งกลับ array ของ URL
     } catch (error) {
       console.error("Error uploading to Firebase:", error);
       res.status(500).json({ error: "Upload failed." });
     }
-  }
-);
+});
