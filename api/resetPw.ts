@@ -12,7 +12,7 @@ const OTP_STORE: {
 // ส่ง OTP
 router.post("/send-otp", async (req, res) => {
   const { email } = req.body;
-
+   
   conn.query("SELECT * FROM User WHERE email = ?", [email], async (err, results) => {
     if (err) {
       return res.status(500).json({ success: false, message: "Database error", error: err });
@@ -63,29 +63,33 @@ router.post("/send-otp", async (req, res) => {
 });
 
 
-// router.post("/auth/verify-otp", (req, res) => {
-//   const { email, otp } = req.body;
+router.post("/verify-otp", (req, res) => {
+  const { email, otp } = req.body;
 
-//   if (!email || !otp) {
-//     return res.status(400).json({ success: false, message: "Email and OTP are required" });
-//   }
+  if (!email || !otp) {
+    res.status(400).json({ success: false, message: "Email and OTP are required" });
+    return;
+  }
 
-//   const record = OTP_STORE[email];
-//   if (!record) {
-//     return res.status(400).json({ success: false, message: "No OTP found for this email. Please send OTP again." });
-//   }
+  const record = OTP_STORE[email];
+  if (!record) {
+    res.status(400).json({ success: false, message: "ไม่พบรหัส OTP สำหรับอีเมลนี้ กรุณาส่งรหัส OTP อีกครั้ง" });
+    return;
+  }
 
-//   if (Date.now() > record.expires) {
-//     delete OTP_STORE[email];
-//     return res.status(400).json({ success: false, message: "OTP has expired. Please send OTP again." });
-//   }
+  if (Date.now() > record.expires) {
+    delete OTP_STORE[email];
+    res.status(400).json({ success: false, message: "รหัส OTP หมดอายุแล้ว กรุณาส่งรหัสใหม่อีกครั้ง" });
+    return;
+  }
 
-//   if (record.otp !== otp) {
-//     return res.status(400).json({ success: false, message: "Invalid OTP. Please try again." });
-//   }
+  if (record.otp !== otp) {
+    res.status(400).json({ success: false, message: "รหัส OTP ไม่ถูกต้อง กรุณาลองอีกครั้ง" });
+    return;
+  }
 
-//   delete OTP_STORE[email];
+  delete OTP_STORE[email];
 
-//   return res.json({ success: true, message: "OTP verified successfully" });
-// });
+  res.status(400).json({ success: true, message: "ยืนยันรหัส OTP สำเร็จแล้ว" });
+});
 

@@ -227,3 +227,29 @@ router.delete("/deleteAccount", (req, res) => {
     });
   });
 });
+
+router.put('/editpass', async (req, res) => {
+  const { userId, newPassword } = req.body;
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const sqlUpdate = 'UPDATE User SET password = ? WHERE userID = ?';
+    conn.query(sqlUpdate, [newHashedPassword, userId], (updateErr) => {
+      if (updateErr) return res.status(500).json({ message: 'Update failed' });
+
+      res.json({ message: 'แก้ไขรหัสผ่านใหม่สำเร็จ' });
+    });
+});
+
+router.put('/editpasslogin', async (req, res) => {
+  const { email, newPassword } = req.body;
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const sqlUpdate = 'UPDATE User SET password = ? WHERE email = ?';
+    conn.query(sqlUpdate, [newHashedPassword, email], (updateErr) => {
+      if (updateErr) return res.status(500).json({ message: 'Update failed' });
+
+      res.json({ message: 'แก้ไขรหัสผ่านใหม่สำเร็จ' });
+    });
+});

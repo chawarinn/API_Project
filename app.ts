@@ -12,6 +12,7 @@ import { router as user } from "./api/user";
 import { router as photo } from "./api/photo";
 import { router as resetPW } from "./api/resetPw";
 
+
 import bodyParser from "body-parser";
 
 export const app = express();
@@ -40,4 +41,4 @@ app.use(
   app.use("", roomshare);
   app.use("", user);
   app.use("", photo);
-  app.use("", resetPW);
+  app.use("/auth", resetPW);
