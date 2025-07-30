@@ -54,7 +54,7 @@ router.post(
         urls.push(imageUrl);
       }
 
-      res.status(200).json({ urls }); // ส่งกลับ array ของ URL
+      res.status(200).json({ urls }); 
     } catch (error) {
       console.error("Error uploading to Firebase:", error);
       res.status(500).json({ error: "Upload failed." });
